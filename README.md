@@ -21,7 +21,7 @@ Local AI assistant on Raspberry Pi 5 with private intranet
 - Raspberry Pi 5 (8GB RAM)
 - HDMI 미니 모니터
 - UPS HAT
-- 블루투스 키보드
+- 블루투스 키보드 (선택, 필수 아님)
 
 ### 소프트웨어
 - Raspberry Pi OS (64-bit)
@@ -33,7 +33,7 @@ Local AI assistant on Raspberry Pi 5 with private intranet
 ## 📋 진행 상황
 
 - [x] 프로젝트 기획 및 부품 결정
-- [ ] 노트북 사전 테스트 (Ollama + 8B)
+- [x] 노트북 사전 테스트 (Ollama + 8B)
 - [ ] 라즈베리파이 OS 설치
 - [ ] 로컬 AI 구동
 - [ ] Tailscale 인트라넷 구축
