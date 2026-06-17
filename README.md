@@ -26,9 +26,9 @@ Local AI assistant on Raspberry Pi 5 with private intranet
 ### 소프트웨어
 - Raspberry Pi OS (64-bit)
 - Ollama
-- Qwen3 8B / Llama 3.1 8B
+- Qwen3 8B / Llama 3.1 8B(gwen3에 문제 발생시)
 - Tailscale
-- Open WebUI
+- Open WebUI(보류)
 
 ## 📋 진행 상황
 
