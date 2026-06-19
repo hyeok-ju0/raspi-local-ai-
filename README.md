@@ -34,7 +34,7 @@ Local AI assistant on Raspberry Pi 5 with private intranet
 
 - [x] 프로젝트 기획 및 부품 결정
 - [x] 노트북 사전 테스트 (Ollama + 8B)
-- [ ] 라즈베리파이 OS 설치
+- [x] 라즈베리파이 OS 설치
 - [ ] 로컬 AI 구동
 - [ ] Tailscale 인트라넷 구축
 - [ ] 휴대용 핸드헬드 완성
