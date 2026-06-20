@@ -32,13 +32,16 @@ Local AI assistant on Raspberry Pi 5 with private intranet
 
 ## 📋 진행 상황
 
-- [x] 프로젝트 기획 및 부품 결정
-- [x] 노트북 사전 테스트 (Ollama + 8B)
-- [x] 라즈베리파이 OS 설치
-- [x] 로컬 AI 구동
-- [ ] Tailscale 인트라넷 구축
-- [ ] 휴대용 핸드헬드 완성
-- [ ] 케이스 제작 (3D 모델링)
+- [x] OS 설치 + SSH 접속
+- [x] Ollama + Qwen3 8B 설치
+- [x] 성능 실측
+- [x] Tailscale 인트라넷 구성
+- [x] Open WebUI 설치 및 연결
+- [x] 노트북 + 폰 인트라넷 연결
+- [ ] Llama 3.2 3B 설치
+- [ ] SSH 키 인증
+- [ ] Syncthing 파일 동기화
+- [ ] DSI 터치스크린 + LiPo 배터리 통합
 
 ## 📁 저장소 구조
 raspi-local-ai/
