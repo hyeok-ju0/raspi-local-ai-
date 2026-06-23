@@ -1,4 +1,3 @@
-# docs/design-concept.md
 # 프로젝트 설계 컨셉 (raspi-local-ai)
 
 ## 한 줄 정의
@@ -62,11 +61,11 @@
 | Raspberry Pi OS (64-bit) | 운영체제 | ✅ 설치 완료 |
 | Ollama | 로컬 LLM 실행 | ✅ 설치 완료 |
 | Qwen3 8B | 복잡한 추론용 모델 | ✅ 설치 완료 |
-| Llama 3.2 3B | 기본/일상 모델 | ⬜ 미설치 |
+| Llama 3.2 3B | 기본/일상 모델 | ✅ 설치 완료 |
 | Tailscale | 인트라넷 (메시 VPN) | ✅ 설치 완료 |
 | Docker | 컨테이너 런타임 | ✅ 설치 완료 |
 | Open WebUI | AI 채팅 인터페이스 | ✅ 설치 완료 |
-| Syncthing | 파일 동기화 | ⬜ 미설치 |
+| Syncthing | 파일 동기화 | ✅ 설치 완료 |
 
 ---
 
@@ -81,13 +80,13 @@
 
 ### 위협 모델 우선순위
 1. Tailscale 계정 탈취 → YubiKey + 강력한 비밀번호
-2. SSH 공격 → 키 인증 전환 (예정)
+2. SSH 공격 → 키 인증 전환 (완료)
 3. 인터넷 직접 노출 금지 → 포트 포워딩 없음
 
 ### 현재 보안 상태
 - OpenAI API 차단 (외부 전송 경로 없음) ✅
 - Tailscale 암호화 통신 ✅
-- SSH 키 인증 ⬜ (예정)
+- SSH 키 인증 ✅
 
 ---
 
@@ -111,13 +110,13 @@
 - [x] 성능 실측
 - [x] Tailscale 인트라넷 구성
 - [x] Open WebUI 설치 및 연결
-- [x] 노트북 + 폰 인트라넷 연결
+- [x] 노트북 + 폰 + 태블릿 인트라넷 연결
+- [x] Llama 3.2 3B 설치
+- [x] SSH 키 인증
+- [x] Syncthing 파일 동기화
+- [x] 부팅 시 Open WebUI 자동 실행
 
 ### 1차 완성 (진행 중)
-- [ ] Llama 3.2 3B 설치
-- [ ] SSH 키 인증
-- [ ] Syncthing 파일 동기화
-- [ ] 부팅 시 Open WebUI 자동 실행
 - [ ] DSI 터치스크린 + LiPo 배터리 통합
 
 ### 2차 확장
