@@ -18,7 +18,7 @@
 ### 하드웨어
 - Raspberry Pi 5 (8GB RAM)
 - DSI 3.5인치 터치스크린
-- LiPo 2000mAh 배터리 (IP5306 충전 모듈)
+- LiPo 3000mAh 배터리 (IP5305T 충방전 모듈)
 - 블루투스 키보드 (선택, 필수 아님)
 
 ### 소프트웨어
@@ -41,7 +41,7 @@
 - [x] SSH 키 인증
 - [x] Syncthing 파일 동기화
 - [x] 부팅 시 Open WebUI 자동 실행
-- [ ] DSI 터치스크린 + LiPo 배터리 통합
+- [ ] DSI 터치스크린 + LiPo 배터리 통합 (부품 구매 완료, 조립 대기)
 
 ## 📁 저장소 구조
 raspi-local-ai/
