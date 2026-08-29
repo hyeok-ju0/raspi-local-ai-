@@ -1,0 +1,19 @@
+FROM gemma4:e2b
+
+TEMPLATE """{{ if .System }}<start_of_turn>user
+{{ .System }}
+
+{{ end }}{{ range .Messages }}{{ if eq .Role "user" }}<start_of_turn>user
+{{ .Content }}<end_of_turn>
+<start_of_turn>model
+{{ else if eq .Role "assistant" }}{{ .Content }}<end_of_turn>
+{{ end }}{{ end }}"""
+
+SYSTEM """
+(이전과 동일한 시스템 프롬프트 내용)
+"""
+
+PARAMETER stop "<start_of_turn>"
+PARAMETER stop "<end_of_turn>"
+PARAMETER num_ctx 16384
+PARAMETER temperature 0.2
