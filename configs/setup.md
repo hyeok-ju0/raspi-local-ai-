@@ -96,7 +96,7 @@ docker run -d \
   -e SCARF_NO_ANALYTICS=true \
   -e DO_NOT_TRACK=true \
   -e ANONYMIZED_TELEMETRY=false \
-  -e WEBUI_SECRET_KEY==고정값> \
+  -e WEBUI_SECRET_KEY=<고정값> \
   -e RAG_EMBEDDING_MODEL=nomic-embed-text-v2 \
   ghcr.io/open-webui/open-webui:main
 ```
@@ -187,9 +187,9 @@ dmesg | grep -i "killed process"
 ---
 
 ## 영구 저널 활성화 (2026-08-31 적용)
-기본 상태에서는 재부팅의 로그가 사라져, OOM 등 사고 원인 규명이
+기본 상태에서는 재부팅 시 이전 부팅의 로그가 사라져, OOM 등 사고 원인 규명이
 반복적으로 어려웠습니다. 아래 설정으로 재부팅 후에도 `journalctl -b -1`로
-직전 부팅이 로그를 확인할 수 있습니다.
+직전 부팅 로그를 확인할 수 있습니다.
 ```bash
 sudo mkdir -p /var/log/journal
 sudo systemd-tmpfiles --create --prefix /var/log/journal

@@ -7,7 +7,7 @@
 라즈베리파이 5에 로컬 LLM을 직접 구동하고, Tailscale 기반 인트라넷으로
 다중 기기 간 안전한 데이터 흐름을 구축하는 임베디드 AI 프로젝트입니다.
 휴대 모드(배터리)와 거치 모드(외부 전원)를 전원 종류로 자동 판별해,
-"기본은 차단, 의도적으로 연결"이라는 원칙 아래 동작합니다.
+"기본은 차단, 의도적으로만 연결"이라는 원칙 아래 동작합니다.
 
 ## 🎯 동기
 
@@ -45,17 +45,17 @@
 - Open WebUI (Docker, `OFFLINE_MODE=true`) — 거치 모드 화면 인터페이스, RAG 지식베이스 관리
 - 휴대 모드는 브라우저 대신 **터미널 + Open WebUI API 직접 호출** 방식으로 전환 중
   (브라우저 자체가 메모리 문제의 핵심 원인으로 확인됨)
-- RAG: nomic-embed-text-v2 임베딩 모델, 수업자료/개인뭸 KB 분리, 1시간 간격 증분 동기화
-- Tailscale (인증:스), Syncthing (파일 동기화)
+- RAG: nomic-embed-text-v2 임베딩, 수업자료/개인노트 KB 분리, 1시간 간격 증분 동기화
+- Tailscale (인트라넷), Syncthing (파일 동기화)
 - 한국어 입력: fcitx5 + fcitx5-hangul + squeekboard
-- gocryptfs 기반 RAG 폴더 암호화 (설계 완냌, 구턄 옚튕)
+- gocryptfs 기반 RAG 폴더 암호화 (설계 완료, 구현 예정)
 
-## 📋 ꧄행 상황
+## 📋 진행 상황
 
-### 완냌
-- [x] 한라즈베리으 거보 (Pi5 + 터치스크린 +밴섰리 플랜 A)
+### 완료
+- [x] 하드웨어 조립 (Pi5 + 터치스크린 + 배터리 플랜 A)
 - [x] 전원 기반 모드 자동 판별 (`detect-power-mode` systemd 서비스)
-- [x] 부팅 시��밠링럌드 휴대=차단, 거치=허용)
+- [x] 부팅 시 무선 자동 제어 (휴대=차단, 거치=허용)
 - [x] 스마트 큐잉(`ai-que`), rfkill 킬 스위치(`killon`/`killoff`)
 - [x] Tailscale 인트라넷, SSH 키 인증, Syncthing
 - [x] Open WebUI 설치 및 부팅 자동 실행
