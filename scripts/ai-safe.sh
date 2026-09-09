@@ -1,14 +1,17 @@
 #!/bin/bash
-# ai-safe.sh - Ollama 직통 호출 + 타임아웃 자동 정리 + 대화 저장/재개/목록
-# 단발 모드: ./ai-safe.sh "질문 내용" [모델명]
-# 대화형 모드: ./ai-safe.sh
+# ai-safe.sh - Ollama 직통 호출 + 타임아웃 자동 정리 + 대화 저장/재개/목록 + RAG(선택)
+# 대화형(RAG 꺼짐): ./ai-safe.sh
+# 대화형(RAG 켜짐): ./ai-safe.sh rag
+# 단발 모드: ./ai-safe.sh "질문 내용" [모델명]   (rag를 앞에 붙이면 RAG 사용)
 # 새 대화: ./ai-safe.sh new [모델명]
 # 목록 보기: ./ai-safe.sh list
 # 과거 대화 불러오기: ./ai-safe.sh resume <번호>
+# 대화 중 전환: rag on / rag off
 
 HISTORY_DIR="$HOME/.ai_history"
 ARCHIVE_DIR="$HISTORY_DIR/archive"
 CURRENT_FILE="$HISTORY_DIR/current.json"
+RAG_CONTEXT_SCRIPT="$HOME/rag_data/rag_context.py"
 mkdir -p "$ARCHIVE_DIR"
 
 MODEL="qwen3:4b-instruct"
@@ -16,6 +19,13 @@ SINGLE_PROMPT=""
 FORCE_NEW=false
 LIST_MODE=false
 RESUME_INDEX=""
+RAG_ENABLED=false
+
+# 'rag'가 첫 인자면 RAG 활성화하고 나머지 인자를 그대로 파싱
+if [ "$1" = "rag" ]; then
+  RAG_ENABLED=true
+  shift
+fi
 
 if [ "$1" = "new" ]; then
   FORCE_NEW=true
@@ -32,7 +42,7 @@ elif [ -n "$1" ] && [[ "$1" == *:* ]]; then
 fi
 
 TIMEOUT=240
-SYSTEM_PROMPT="2~4문장 정도로 핵심 내용을 충분히 설명하되, 표·이모지·헤더 같은 서식은 쓰지 마세요. 평범한 문장으로만 답하세요. 사용자가 말하지 않은 시간, 이름, 수치 등 세부사항을 지어내지 마세요."
+SYSTEM_PROMPT="2~4문장 정도로 핵심 내용을 충분히 설명하되, 표·이모지·헤더 같은 서식은 쓰지 마세요. 평범한 문장으로만 답하세요. 사용자가 말하지 않은 시간, 이름, 수치 등 세부사항을 지어내지 마세요. 아래에 [참고자료]가 주어지면 그 내용을 우선 참고해서 답하고, 참고자료에 없는 내용은 참고자료 때문이라고 말하지 말고 일반 지식으로 답하세요."
 
 init_fresh_history() {
   python3 -c "
@@ -144,26 +154,60 @@ print(users[-1][:40] if users else '')
   HISTORY_FILE="$CURRENT_FILE"
 fi
 
-# 대화 저장용 임시 작업 디렉토리 (매 세션 고유)
 WORK_DIR=$(mktemp -d)
 trap "rm -rf '$WORK_DIR'" EXIT
 
 call_model() {
   local user_msg="$1"
   echo -n "$user_msg" > "$WORK_DIR/user_msg.txt"
+  rm -f "$WORK_DIR/sent_msg.txt"
 
+  # RAG 검색 (RAG_ENABLED가 true이고 임계값 이상일 때만 컨텍스트 사용)
+  if [ "$RAG_ENABLED" = true ] && [ -f "$RAG_CONTEXT_SCRIPT" ]; then
+    local rag_result
+    rag_result=$(python3 "$RAG_CONTEXT_SCRIPT" "$WORK_DIR/user_msg.txt" 2>/dev/null)
+    if [ -n "$rag_result" ]; then
+      echo "$rag_result" > "$WORK_DIR/rag_result.json"
+      local is_used
+      is_used=$(python3 -c "
+import json
+try:
+    d = json.load(open('$WORK_DIR/rag_result.json', encoding='utf-8'))
+    print('yes' if d.get('used') else 'no')
+except: print('no')
+")
+      if [ "$is_used" = "yes" ]; then
+        python3 -c "
+import json
+d = json.load(open('$WORK_DIR/rag_result.json', encoding='utf-8'))
+user_msg = open('$WORK_DIR/user_msg.txt', encoding='utf-8', errors='replace').read()
+combined = '[참고자료]\n' + d['context'] + '\n\n[질문]\n' + user_msg
+open('$WORK_DIR/final_msg.txt', 'w', encoding='utf-8').write(combined)
+print('\n'.join(d['sources']))
+" > "$WORK_DIR/sources.txt"
+        echo "[ai] 📎 참고: $(tr '\n' ', ' < "$WORK_DIR/sources.txt" | sed 's/,$//')"
+        cp "$WORK_DIR/final_msg.txt" "$WORK_DIR/sent_msg.txt"
+      fi
+    fi
+  fi
+
+  local SENT_MSG_FILE="$WORK_DIR/user_msg.txt"
+  if [ -f "$WORK_DIR/sent_msg.txt" ]; then
+    SENT_MSG_FILE="$WORK_DIR/sent_msg.txt"
+  fi
   local REQUEST_BODY
   REQUEST_BODY=$(python3 -c "
 import json
 history = json.load(open('$HISTORY_FILE', encoding='utf-8', errors='replace'))
-user_msg = open('$WORK_DIR/user_msg.txt', encoding='utf-8', errors='replace').read()
-history.append({'role': 'user', 'content': user_msg})
+sent_msg = open('$SENT_MSG_FILE', encoding='utf-8', errors='replace').read()
+history.append({'role': 'user', 'content': sent_msg})
 body = {
     'model': '$MODEL',
     'messages': history,
     'think': False,
     'stream': True,
-    'options': {'num_predict': 500}
+    'options': {'num_predict': 500},
+    'keep_alive': '30m'
 }
 print(json.dumps(body))
 ")
@@ -186,16 +230,22 @@ except Exception: pass
 
   CURL_PID=$!
 
-  ( sleep $TIMEOUT; kill -0 $CURL_PID 2>/dev/null && echo "" && echo "[watchdog] ${TIMEOUT}초 타임아웃" && kill -TERM $CURL_PID 2>/dev/null ) &
+  ( sleep $TIMEOUT; kill -0 $CURL_PID 2>/dev/null && echo "" && echo "[watchdog] ${TIMEOUT}초 타임아웃" && touch "$WORK_DIR/timeout_flag" && kill -TERM $CURL_PID 2>/dev/null ) &
   WATCHDOG_PID=$!
 
   wait $CURL_PID 2>/dev/null
   kill $WATCHDOG_PID 2>/dev/null
   echo ""
 
-  ollama stop "$MODEL" 2>/dev/null
+  # 정상 종료 시에는 모델을 유지(keep_alive 30분)해 재로딩 지연을 없앰.
+  # 타임아웃(사고 루프 등 이상 상황)일 때만 강제 정리.
+  if [ -f "$WORK_DIR/timeout_flag" ]; then
+    ollama stop "$MODEL" 2>/dev/null
+    echo "[ai] ⚠️ 타임아웃으로 인해 모델을 강제 정리했습니다."
+    rm -f "$WORK_DIR/timeout_flag"
+  fi
 
-  # 파일을 통해서만 주고받아 인코딩 오류로 인한 저장 실패를 방지
+  # 대화 기록에는 원래 사용자 질문(RAG 컨텍스트 제외)만 저장
   python3 -c "
 import json
 history = json.load(open('$HISTORY_FILE', encoding='utf-8', errors='replace'))
@@ -210,17 +260,38 @@ json.dump(history, open('$HISTORY_FILE', 'w', encoding='utf-8'), ensure_ascii=Fa
   fi
 }
 
+rag_status_text() {
+  if [ "$RAG_ENABLED" = true ]; then echo "ON"; else echo "OFF"; fi
+}
+
 if [ -n "$SINGLE_PROMPT" ]; then
   call_model "$SINGLE_PROMPT"
 else
-  echo "[ai] $MODEL 대화형 모드 (종료: exit / 새 대화: ai new / 목록: ai list / 불러오기: ai resume N)"
+  echo "[ai] $MODEL 대화형 모드 | RAG: $(rag_status_text)"
+  echo "[ai] 종료: exit / 새 대화: ai new / 목록: ai list / 불러오기: ai resume N / RAG 전환: rag on, rag off"
   while true; do
     read -r -p "> " USER_INPUT
+    # 앞뒤 공백 제거 (탭/스페이스)
+    USER_INPUT="$(printf '%s' "$USER_INPUT" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
     if [ -z "$USER_INPUT" ]; then
       continue
     fi
     if [ "$USER_INPUT" = "exit" ] || [ "$USER_INPUT" = "quit" ]; then
       break
+    fi
+    if [ "$USER_INPUT" = "rag on" ]; then
+      RAG_ENABLED=true
+      echo "[ai] RAG를 켰습니다. 관련 노트·수업자료를 참고해 답변합니다 (응답이 느려질 수 있습니다)."
+      continue
+    fi
+    if [ "$USER_INPUT" = "rag off" ]; then
+      RAG_ENABLED=false
+      echo "[ai] RAG를 껐습니다. 일반 대화 모드로 빠르게 답변합니다."
+      continue
+    fi
+    if [ "$USER_INPUT" = "rag" ] || [ "$USER_INPUT" = "rag status" ]; then
+      echo "[ai] 현재 RAG 상태: $(rag_status_text)"
+      continue
     fi
     call_model "$USER_INPUT"
   done

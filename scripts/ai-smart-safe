@@ -1,0 +1,46 @@
+#!/bin/bash
+MODE_FILE="/etc/cyberdeck_mode"
+QUEUE_FILE="$HOME/.ai_queue.txt"
+MODE=$(cat "$MODE_FILE" 2>/dev/null)
+
+RAG_FLAG=""
+if [ "$1" = "rag" ]; then
+    RAG_FLAG="rag"
+    shift
+fi
+
+if [ "$MODE" = "portable" ]; then
+    if [ $# -eq 0 ]; then
+        echo "⚠️ 휴대 모드에서는 8B 모델을 바로 실행할 수 없습니다."
+        echo "질문을 함께 입력해 주세요. 예: ai-smart 오늘 날씨 어때?"
+        exit 1
+    fi
+    echo "$*" >> "$QUEUE_FILE"
+    echo "📥 휴대 모드입니다. 질문을 저장했습니다: \"$*\""
+    echo "거치 모드로 전환 후 'ai-que' 명령으로 확인하실 수 있습니다."
+    exit 0
+fi
+
+THROTTLE=$(vcgencmd get_throttled)
+if echo "$THROTTLE" | grep -qE "0x[0-9a-f]*[13579bBdDfF]"; then
+    echo "⚠️  경고: 현재 전력 공급이 불안정합니다 (저전압 감지: $THROTTLE)."
+    read -p "정말 실행하시겠습니까? (y/N): " confirm
+    if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+        echo "실행이 취소되었습니다."
+        exit 0
+    fi
+fi
+
+if [ $# -eq 0 ]; then
+    if [ -n "$RAG_FLAG" ]; then
+        "$HOME/ai-safe.sh" rag qwen3:8b
+    else
+        "$HOME/ai-safe.sh" qwen3:8b
+    fi
+else
+    if [ -n "$RAG_FLAG" ]; then
+        "$HOME/ai-safe.sh" rag "$*" qwen3:8b
+    else
+        "$HOME/ai-safe.sh" "$*" qwen3:8b
+    fi
+fi
