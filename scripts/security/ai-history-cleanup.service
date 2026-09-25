@@ -1,0 +1,6 @@
+[Unit]
+Description=AI 대화 기록 30일 경과분 자동 삭제
+
+[Service]
+Type=oneshot
+ExecStart=/home/hyeogju/cleanup_ai_history.sh

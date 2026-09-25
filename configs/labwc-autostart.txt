@@ -1,0 +1,11 @@
+export WAYLAND_DISPLAY=wayland-0
+export XDG_RUNTIME_DIR=/run/user/1000
+sleep 3 && wlopm --on DSI-2 &
+
+# 휴대 모드에서만 10분 무작동 시 화면 자동 잠금 (2026-09-11)
+if [ "$(cat /etc/cyberdeck_mode 2>/dev/null)" = "portable" ]; then
+  swayidle -w timeout 600 'swaylock -f' &
+fi
+
+# 클립보드 자동 초기화 (2026-09-23, 복사 2분 후 비움)
+~/clipboard_guard.sh &

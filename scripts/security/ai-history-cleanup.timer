@@ -1,0 +1,9 @@
+[Unit]
+Description=AI 대화 기록 자동 삭제 타이머 (매일)
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target
